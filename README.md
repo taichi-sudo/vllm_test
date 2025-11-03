@@ -22,6 +22,7 @@ sudo docker run -d -p 11434:11434 --name ollama-server ollama/ollama
 ```
 
 ## モデル（例：llama2:7b）ダウンロード
+・モデルを追加したいときは下記のモデル名を変更
 ```
 sudo docker exec -it ollama-server ollama pull llama2:7b
 ```
