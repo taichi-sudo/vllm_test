@@ -51,3 +51,17 @@ sudo docker logs openwebui
 http://[GCE外部IP]:5006/
 ```
 
+## APIを叩くなら
+```
+curl http://localhost:11434/v1/chat/completions \
+    -H "Content-Type: application/json" \
+    -d '{
+        "model": "gemma3:4b",
+        "messages": [
+            {
+                "role": "user",
+                "content": "ChatGPTを開発している企業を答えてください。"
+            }
+        ]
+    }'
+```
