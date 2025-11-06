@@ -69,6 +69,39 @@ sudo docker run -d --network=host -v open-webui:/app/backend/data -e OLLAMA_BASE
 ```
 
 # API叩く
+localhostだと以下の用に指定する。
+streamがtrueだと、分割して帰って来るので迷惑。
+```
+curl http://localhost:11434/api/generate -d '{
+  "model": "gemma3:27b",
+  "prompt": "Why is the sky blue?",
+  "stream": false
+}'
+```
+GCEファイアウォールルールの設定をする。11434など、指定したポートを通すルールを追加する。
+続いては、Ollamaの設定ファイルを作成する。
+
+1. 設定ファイル用のディレクトリを作成
+```
+sudo mkdir -p /etc/systemd/system/ollama.service.d/
 ```
 
+2. 設定ファイル (override.conf) を直接作成 （OLLAMA_HOST=0.m.m.m をファイルに書き込みます）
+```
+echo -e "[Service]\nEnvironment=\"OLLAMA_HOST=0.0.0.0\"" | sudo tee /etc/systemd/system/ollama.service.d/override.conf
+```
+3. 設定のリロード
+```
+sudo systemctl daemon-reload
+sudo systemctl restart ollama
+sudo ss -tlnp | grep 11434
+```
+
+API叩いてテスト
+```
+curl http://[GCEの外部IPアドレス]:11434/api/generate -d '{
+  "model": "gemma3:27b",
+  "prompt": "Why is the sky blue?",
+  "stream": false
+}'
 ```
