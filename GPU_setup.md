@@ -32,7 +32,8 @@ sudo ufw allow 11434/tcp
 curl -fsSL https://ollama.com/install.sh | sh
 ```
 
-＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊以下が表示されたときの対応＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
+---
+★★★★★★以下が表示されたときの対応★★★★★★
 ```
 ERROR: NVIDIA GPU detected, but your OS and Architecture are not supported by NVIDIA. Please install the CUDA driver manually https://docs.nvidia.com/cuda/cuda-installation-guide-linux/
 ```
@@ -61,7 +62,9 @@ sudo apt-get update
 sudo apt-get install --reinstall nvidia-container-toolkit
 ```
 ※完了したらまたOllamaをインストールする。
-＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
+
+★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+---
 
 使いたいモデルを下記小マントでインストールする
 
