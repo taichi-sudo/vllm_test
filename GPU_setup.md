@@ -23,7 +23,6 @@ sudo apt install docker-ce docker-ce-cli containerd.io -y
 
 ## ファイアウォール設定
 ```
-sudo ufw allow 5006/tcp
 sudo ufw allow 11434/tcp
 ```
 
@@ -77,29 +76,94 @@ sudo systemctl start docker
 sudo docker run -d --network=host -v open-webui:/app/backend/data -e OLLAMA_BASE_URL=http://127.0.0.1:11434 --name open-webui --restart always ghcr.io/open-webui/open-webui:main
 ```
 
-# API叩く
-localhostだと以下の用に指定する。
-streamがtrueだと、分割して帰って来るので迷惑。
-```
-curl http://localhost:11434/api/generate -d '{
-  "model": "gemma3:27b",
-  "prompt": "Why is the sky blue?",
-  "stream": false
-}'
-```
 GCEファイアウォールルールの設定をする。11434など、指定したポートを通すルールを追加する。
 続いては、Ollamaの設定ファイルを作成する。
 
-1. 設定ファイル用のディレクトリを作成
+nginxのインストール
+```
+sudo apt update
+sudo apt install nginx-core
+```
+
+アクセストークンがあるリクエストのみパス
+```
+sudo vim /etc/nginx/sites-available/ollama
+```
+
+```
+# -----------------------------------------------------------
+# アクセストークンを定義する
+# "Bearer [トークン]" 1; という形式で記述します。
+# -----------------------------------------------------------
+map $http_authorization $valid_token {
+    "Bearer xxxxxxxxxxxxxxxxxxxxx" 1; 
+
+    # トークン追加後は以下に記載してく
+    # "Bearer xxxxxxxxxxxxxx" 1;
+    default 0;
+}
+
+server {
+    # 11434番ポートで外部からのリクエストを待機
+    listen 11434;
+    listen [::]:11434;
+    
+    # サーバーのIPアドレス
+    server_name xxx.xxx.xxx.xxx; 
+
+    location / {
+        # -----------------------------------------------------------
+        # 認証チェック
+        # $valid_token が 0 (無効) だった場合、
+        # 401 Unauthorized (認証エラー) 
+        # -----------------------------------------------------------
+        if ($valid_token = 0) {
+            return 401 '{"error": "Unauthorized"}';
+        }
+
+        # -----------------------------------------------------------
+        # 認証が通れば、内部(localhost)で動いているOllamaにリクエストを中継
+        # -----------------------------------------------------------
+        proxy_pass http://127.0.0.1:11434; # 内部のOllama
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        
+        # Ollamaのストリーミング応答に対応するための設定
+        proxy_buffering off;
+        proxy_cache off;
+        proxy_set_header Connection '';
+        proxy_http_version 1.1;
+        chunked_transfer_encoding off;
+    }
+}
+```
+
+設定ファイルのシンボリックリンクを作成（sites-enabledに登録）：
+```
+sudo ln -s /etc/nginx/sites-available/ollama /etc/nginx/sites-enabled/
+```
+nginx設定ファイルの文法チェック：
+```
+sudo nginx -t
+```
+
+nginxのリロード（設定反映）：
+```
+sudo systemctl reload nginx
+```
+
+設定ファイル用のディレクトリを作成
 ```
 sudo mkdir -p /etc/systemd/system/ollama.service.d/
 ```
 
-2. 設定ファイル (override.conf) を直接作成 （OLLAMA_HOST=0.m.m.m をファイルに書き込みます）
+設定ファイル (override.conf) を直接作成 （OLLAMA_HOST=0.m.m.m をファイルに書き込みます）
 ```
 echo -e "[Service]\nEnvironment=\"OLLAMA_HOST=0.0.0.0\"" | sudo tee /etc/systemd/system/ollama.service.d/override.conf
 ```
-3. 設定のリロード
+設定のリロード
 ```
 sudo systemctl daemon-reload
 sudo systemctl restart ollama
@@ -108,9 +172,11 @@ sudo ss -tlnp | grep 11434
 
 API叩いてテスト
 ```
-curl http://[GCEの外部IPアドレス]:11434/api/generate -d '{
-  "model": "gemma3:27b",
-  "prompt": "Why is the sky blue?",
-  "stream": false
-}'
+curl http://localhost:11434/api/generate \
+  -H "Authorization: Bearer xxxxxxxxxxxxxxxx" \
+  -d '{
+    "model": "deepseek-r1:70b",
+    "prompt": "Why is the sky blue?",
+    "stream": false
+  }'
 ```
