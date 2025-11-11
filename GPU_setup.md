@@ -60,9 +60,10 @@ nvidiaのコンテナtoolkitをinstallする
 sudo apt-get update
 sudo apt-get install --reinstall nvidia-container-toolkit
 ```
-※完了したらまたOllamaをインストールする。
+完了したらまたOllamaをインストールする。
 
 ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+
 ---
 
 使いたいモデルを下記小マントでインストールする
