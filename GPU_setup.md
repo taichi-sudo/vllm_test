@@ -181,3 +181,8 @@ curl http://localhost:11434/api/generate \
     "stream": false
   }'
 ```
+
+# GUIでアクセストークンが発行できないとき
+* 「グループ」の権限でアクセストークンをenableにする
+* 「個人」の権限でもアクセストークンをenableにする
+
